@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6a447eacf652b04db53abde8eaf20b5, type: 3}
+  m_Name: Thunder
+  m_EditorClassIdentifier: 
+  elementName: 
+  elementID: 0
+  strongAgainst: 
+  weakAgainst: 
+  elementPlayerHealth: 0
+  elementStrengthModifier: 0
+  elementWeaknessModifier: 0
+  elementZoneHealthModifier: 0
+  elementZoneAttackModifier: 0
