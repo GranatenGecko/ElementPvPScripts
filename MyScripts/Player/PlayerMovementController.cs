@@ -209,7 +209,7 @@ public class PlayerMovementController : MonoBehaviour
                 if (Input.GetKey(leftKey))
                 {
                     movementState = MovementState.crouchWalkForwardDiagonalLeft;
-                    SetAnimatorMovement(1, -1);
+                    SetAnimatorMovement(-1, 1);
                 }
                 // Mode - Crouching - Forward - Diagonal - Right
                 else if (Input.GetKey(rightKey))
@@ -221,7 +221,7 @@ public class PlayerMovementController : MonoBehaviour
                 else
                 {
                     movementState = MovementState.crouchWalkForward;
-                    SetAnimatorMovement(1, 0);
+                    SetAnimatorMovement(0, 1);
                 }
             }
 
