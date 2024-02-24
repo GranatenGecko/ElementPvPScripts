@@ -1,4 +1,3 @@
-using System.Diagnostics.Eventing.Reader;
 using UnityEngine;
 
 public class PlayerMovementController : MonoBehaviour
@@ -238,7 +237,7 @@ public class PlayerMovementController : MonoBehaviour
                 else if (Input.GetKey(rightKey))
                 {
                     movementState = MovementState.crouchWalkBackwardDiagonalRight;
-                    SetAnimatorMovement(-1, 1);
+                    SetAnimatorMovement(1, -1);
                 }
                 // Mode - Crouching - Backward
                 else
@@ -336,7 +335,7 @@ public class PlayerMovementController : MonoBehaviour
                 else if (Input.GetKey(rightKey))
                 {
                     movementState = MovementState.walkingBackwardDiagonalRight;
-                    SetAnimatorMovement(-1, 1);
+                    SetAnimatorMovement(1, -1);
                 }
                 // Mode - Walking - Backward
                 else
