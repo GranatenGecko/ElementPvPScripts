@@ -1,3 +1,4 @@
+using System.Diagnostics.Eventing.Reader;
 using UnityEngine;
 
 public class PlayerMovementController : MonoBehaviour
@@ -7,11 +8,8 @@ public class PlayerMovementController : MonoBehaviour
     private int verticalHash;
     private int isCrouchHash;
     private int isJumpHash;
-    private int isRunHash;
-    private int isMovingForwardHash;
-    private int isMovingBackwardHash;
-    private int isMovingLeftHash;
-    private int isMovingRightHash;
+    private int moveXHash;
+    private int moveZHash;
 
     // Keybinds
     private KeyCode jumpKey = KeyCode.Space;
@@ -35,7 +33,9 @@ public class PlayerMovementController : MonoBehaviour
 
     //Movement States
     [Header("States")][SerializeField] private MovementState movementState;
-    private enum MovementState{idleStand, walkingForward, walkingBackward,walkingLeft, walkingRight, sprinting, idleCrouch, crouchWalkForward, crouchWalkBackward, crouchWalkLeft, crouchWalkRight, air}
+    private enum MovementState{idleStand, walkingForwardDiagonalLeft, walkingForward, walkingForwardDiagonalRight, walkingBackwardDiagonalLeft, walkingBackward, 
+        walkingBackwardDiagonalRight,walkingLeft, walkingRight, sprinting, idleCrouch, crouchWalkForwardDiagonalLeft, crouchWalkForwardDiagonalRight, 
+        crouchWalkForward, crouchWalkBackwardDiagonalLeft, crouchWalkBackward, crouchWalkBackwardDiagonalRight, crouchWalkLeft, crouchWalkRight, air}
 
     // Ground Check
     private float playerHeight = 1.76f;
@@ -78,18 +78,12 @@ public class PlayerMovementController : MonoBehaviour
     {
         playerRigidbody = GetComponent<Rigidbody>();
         playerRigidbody.freezeRotation = true;
-
         ground = LayerMask.GetMask("Ground");
         defaultObjects = LayerMask.GetMask("Default");
-
         isCrouchHash = Animator.StringToHash("isCrouch");
         isJumpHash = Animator.StringToHash("isJump");
-        isRunHash = Animator.StringToHash("isRun");
-        isMovingForwardHash = Animator.StringToHash("isMovingForward");
-        isMovingBackwardHash = Animator.StringToHash("isMovingBackward");
-        isMovingLeftHash = Animator.StringToHash("isMovingLeft");
-        isMovingRightHash = Animator.StringToHash("isMovingRight");
-
+        moveXHash = Animator.StringToHash("moveX");
+        moveZHash = Animator.StringToHash("moveZ");
         playerRadius = (playerHeight - playerHeightCrouch) * 1.1f;
     }
 
@@ -173,7 +167,7 @@ public class PlayerMovementController : MonoBehaviour
         horizontalInput = Input.GetAxisRaw("Horizontal");
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        // Jump
+        // Input - Jump
         if (Input.GetKey(jumpKey) && isPlayerReadyToJump && isPlayerGrounded)
         {
             isPlayerReadyToJump = false;
@@ -181,7 +175,7 @@ public class PlayerMovementController : MonoBehaviour
             Invoke(nameof(ResetJump), jumpCooldown);
         }
 
-        // Start Crouch
+        // Input - Start Crouch
         if (Input.GetKeyDown(crouchKey) && isPlayerGrounded && !Input.GetKey(sprintKey))
         {
             playerColliderStand.enabled = false;
@@ -189,7 +183,7 @@ public class PlayerMovementController : MonoBehaviour
             isPlayerCrouched = true;
         }
 
-        // Stop Crouch
+        // Input - Stop Crouch
         if (Input.GetKeyUp(crouchKey) && !isPlayerCrouched && isPlayerGrounded)
         {
             playerColliderStand.enabled = true;
@@ -198,48 +192,10 @@ public class PlayerMovementController : MonoBehaviour
         }
     }
 
-    private void SetAnimatorMovementForward()
+    private void SetAnimatorMovement(int x, int y)
     {
-        playerAnimator.SetBool(isMovingForwardHash, true);
-        playerAnimator.SetBool(isMovingBackwardHash, false);
-        playerAnimator.SetBool(isMovingLeftHash, false);
-        playerAnimator.SetBool(isMovingRightHash, false);
-    }
-
-    private void SetAnimatorMovementBackward()
-    {
-        playerAnimator.SetBool(isMovingForwardHash, false);
-        playerAnimator.SetBool(isMovingBackwardHash, true);
-        playerAnimator.SetBool(isMovingLeftHash, false);
-        playerAnimator.SetBool(isMovingRightHash, false);
-        playerAnimator.SetBool(isRunHash, false);
-    }
-
-    private void SetAnimatorMovementLeft()
-    {
-        playerAnimator.SetBool(isMovingForwardHash, false);
-        playerAnimator.SetBool(isMovingBackwardHash, false);
-        playerAnimator.SetBool(isMovingLeftHash, true);
-        playerAnimator.SetBool(isMovingRightHash, false);
-        playerAnimator.SetBool(isRunHash, false);
-    }
-
-    private void SetAnimatorMovementRight()
-    {
-        playerAnimator.SetBool(isMovingForwardHash, false);
-        playerAnimator.SetBool(isMovingBackwardHash, false);
-        playerAnimator.SetBool(isMovingLeftHash, false);
-        playerAnimator.SetBool(isMovingRightHash, true);
-        playerAnimator.SetBool(isRunHash, false);
-    }
-
-    private void SetAnimatorMovementIdle()
-    {
-        playerAnimator.SetBool(isMovingForwardHash, false);
-        playerAnimator.SetBool(isMovingBackwardHash, false);
-        playerAnimator.SetBool(isMovingLeftHash, false);
-        playerAnimator.SetBool(isMovingRightHash, false);
-        playerAnimator.SetBool(isRunHash, false);
+        playerAnimator.SetFloat(moveXHash, x);
+        playerAnimator.SetFloat(moveZHash, y);
     }
 
     private void AnimatorStateHandler()
@@ -250,85 +206,167 @@ public class PlayerMovementController : MonoBehaviour
             playerAnimator.SetBool(isCrouchHash, true);
             if (Input.GetKey(forwardKey))
             {
-                movementState = MovementState.crouchWalkForward;
-                SetAnimatorMovementForward();
+                // Mode - Crouching - Forward - Diagonal - Left
+                if (Input.GetKey(leftKey))
+                {
+                    movementState = MovementState.crouchWalkForwardDiagonalLeft;
+                    SetAnimatorMovement(1, -1);
+                }
+                // Mode - Crouching - Forward - Diagonal - Right
+                else if (Input.GetKey(rightKey))
+                {
+                    movementState = MovementState.crouchWalkForwardDiagonalRight;
+                    SetAnimatorMovement(1, 1);
+                }
+                // Mode - Crouching - Forward
+                else
+                {
+                    movementState = MovementState.crouchWalkForward;
+                    SetAnimatorMovement(1, 0);
+                }
             }
 
             else if (Input.GetKey(backwardKey))
             {
-                movementState = MovementState.crouchWalkBackward;
-                SetAnimatorMovementBackward();
+                // Mode - Crouching - Backward - Diagonal - Left
+                if (Input.GetKey(leftKey))
+                {
+                    movementState = MovementState.crouchWalkBackwardDiagonalLeft;
+                    SetAnimatorMovement(-1, -1);
+                }
+                // Mode - Crouching - Backward - Diagonal - Right
+                else if (Input.GetKey(rightKey))
+                {
+                    movementState = MovementState.crouchWalkBackwardDiagonalRight;
+                    SetAnimatorMovement(-1, 1);
+                }
+                // Mode - Crouching - Backward
+                else
+                {
+                    movementState = MovementState.crouchWalkBackward;
+                    SetAnimatorMovement(0, -1);
+                }
             }
 
+            // Mode - Crouching - Walk - Left
             else if (Input.GetKey(leftKey))
             {
                 movementState = MovementState.crouchWalkLeft;
-                SetAnimatorMovementLeft();
+                SetAnimatorMovement(-1, 0);
             }
 
+            // Mode - Crouching - Walk - Left
             else if (Input.GetKey(rightKey))
             {
                 movementState = MovementState.crouchWalkRight;
-                SetAnimatorMovementRight();
+                SetAnimatorMovement(1, 0);
             }
 
+            // Mode - Crouching - Idle
             else
             {
                 movementState = MovementState.idleCrouch;
-                SetAnimatorMovementIdle();
+                SetAnimatorMovement(0, 0);
             }
             moveSpeed = crouchSpeed;
             playerAnimator.SetBool(isCrouchHash, true);
         }
 
-        // Mode - Walking
+        // Mode - Walking & Running
         else if (isPlayerGrounded && !Input.GetKey(crouchKey) && !isPlayerCrouched!)
         {
             playerAnimator.SetBool(isCrouchHash, false);
             if (Input.GetKey(forwardKey))
             {
-                
                 if (!Input.GetKey(sprintKey) && !isPlayerCrouched)
                 {
                     moveSpeed = walkSpeed;
-                    movementState = MovementState.walkingForward;
-                    SetAnimatorMovementForward();
-                    playerAnimator.SetBool(isRunHash, false);
+                    // Mode - Walking - Forward - Left
+                    if (Input.GetKey(leftKey))
+                    {
+                        movementState = MovementState.walkingForwardDiagonalLeft;
+                        SetAnimatorMovement(-1, 1);
+                    }
+                    // Mode - Walking - Forward -Right
+                    else if (Input.GetKey(rightKey))
+                    {
+                        movementState = MovementState.walkingForwardDiagonalRight;
+                        SetAnimatorMovement(1, 1);
+                    }
+                    // Mode - Walking - Forward
+                    else
+                    {
+                        movementState = MovementState.walkingForward;
+                        SetAnimatorMovement(0, 1);
+                    }
                 }
+
                 else
                 {
                     moveSpeed = sprintSpeed;
-                    movementState = MovementState.sprinting;
-                    playerAnimator.SetBool(isMovingForwardHash, true);
-                    playerAnimator.SetBool(isRunHash, true);
+                    // Mode - Run - Forward - Left
+                    if (Input.GetKey(leftKey))
+                    {
+                        SetAnimatorMovement(-1, 2);
+                    }
+                    // Mode - Run - Forward - Right
+                    else if (Input.GetKey(rightKey))
+                    {
+                        SetAnimatorMovement(1, 2);
+                    }
+                    // Mode - Run - Forward
+                    else
+                    {
+                        movementState = MovementState.sprinting;
+                        SetAnimatorMovement(0, 2);
+                    }
                 }
             }
 
             else if (Input.GetKey(backwardKey))
             {
+                // Mode - Walking - Backward - Left
                 moveSpeed = walkSpeed;
-                movementState = MovementState.walkingBackward;
-                SetAnimatorMovementBackward();
+                if (Input.GetKey(leftKey))
+                {
+                    movementState = MovementState.walkingBackwardDiagonalLeft;
+                    SetAnimatorMovement(-1, -1);
+                }
+                // Mode - Walking - Backward - Right
+                else if (Input.GetKey(rightKey))
+                {
+                    movementState = MovementState.walkingBackwardDiagonalRight;
+                    SetAnimatorMovement(-1, 1);
+                }
+                // Mode - Walking - Backward
+                else
+                {
+                    movementState = MovementState.walkingBackward;
+                    SetAnimatorMovement(0, -1);
+                }
             }
 
+            // Mode - Walking - Left
             else if (Input.GetKey(leftKey))
             {
                 moveSpeed = walkSpeed;
                 movementState = MovementState.walkingLeft;
-                SetAnimatorMovementLeft();
+                SetAnimatorMovement(-1, 0);
             }
 
+            // Mode - Walking - Right
             else if (Input.GetKey(rightKey))
             {
                 moveSpeed = walkSpeed;
                 movementState = MovementState.walkingRight;
-                SetAnimatorMovementRight();
+                SetAnimatorMovement(1, 0);
             }
 
+            // Mode - Stand - Idle
             else
             {
                 movementState = MovementState.idleStand;
-                SetAnimatorMovementIdle();
+                SetAnimatorMovement(0, 0);
             }
             playerAnimator.SetBool(isJumpHash, false);
         }
