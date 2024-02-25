@@ -37,8 +37,8 @@ public class PlayerMovementController : MonoBehaviour
         crouchWalkForward, crouchWalkBackwardDiagonalLeft, crouchWalkBackward, crouchWalkBackwardDiagonalRight, crouchWalkLeft, crouchWalkRight, air}
 
     // Ground Check
-    private float playerHeight = 1.76f;
-    private float playerHeightCrouch = 1.36f;
+    private float playerHeight = 1.80f;
+    private float playerHeightCrouch = 1.32f;
     [SerializeField] private bool isPlayerGrounded; // Ground Check
 
     // Slope Movement
@@ -61,8 +61,7 @@ public class PlayerMovementController : MonoBehaviour
     [Header("References")]
     public Transform playerCharacter;
     public Animator playerAnimator;
-    public CapsuleCollider playerColliderStand;
-    public CapsuleCollider playerColliderCrouch;
+    public CapsuleCollider playerCollider;
     private Rigidbody playerRigidbody;
 
     // Collision Layers
@@ -83,7 +82,7 @@ public class PlayerMovementController : MonoBehaviour
         isJumpHash = Animator.StringToHash("isJump");
         moveXHash = Animator.StringToHash("moveX");
         moveZHash = Animator.StringToHash("moveZ");
-        playerRadius = (playerHeight - playerHeightCrouch) * 1.1f;
+        playerRadius = (playerHeight - playerHeightCrouch);
     }
 
     void OnDrawGizmos()
@@ -109,8 +108,8 @@ public class PlayerMovementController : MonoBehaviour
             {
                 if (!Input.GetKey(crouchKey))
                 {
-                    playerColliderStand.enabled = true;
-                    playerColliderCrouch.enabled = false;
+                    playerCollider.height = playerHeight;
+                    playerCollider.center = new Vector3(0, playerCollider.height / 2, 0);
                     playerAnimator.SetBool(isCrouchHash, false);
                     isPlayerCrouched = false;
                 }
@@ -177,16 +176,16 @@ public class PlayerMovementController : MonoBehaviour
         // Input - Start Crouch
         if (Input.GetKeyDown(crouchKey) && isPlayerGrounded && !Input.GetKey(sprintKey))
         {
-            playerColliderStand.enabled = false;
-            playerColliderCrouch.enabled = true;
+            playerCollider.height = playerHeightCrouch;
+            playerCollider.center = new Vector3(0, playerCollider.height / 2, 0);
             isPlayerCrouched = true;
         }
 
         // Input - Stop Crouch
         if (Input.GetKeyUp(crouchKey) && !isPlayerCrouched && isPlayerGrounded)
         {
-            playerColliderStand.enabled = true;
-            playerColliderCrouch.enabled = false;
+            playerCollider.height = playerHeight;
+            playerCollider.center = new Vector3(0, playerCollider.height / 2, 0);
             isPlayerCrouched = false;
         }
     }
